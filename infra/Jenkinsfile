@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+
+    stages {
+        stage("Limpando a workspace") {
+            steps {
+                sh 'pwd'
+                deleteDir()
+            }
+        }
+
+        stage("Clonando projeto do github"){
+            steps {
+                git credentialsId: "github-ssh", url: "git@github.com:martinsrenan/projeto-caelum.git"
+            }
+        }
+
+        stage("Rodar testes unitarios"){
+            steps {
+                sh "mvn clean test"
+            }
+        }
+
+        stage("Buildar Artefato"){
+            steps {
+                sh "mvn clean package -DskipTests"
+            }
+        }
+
+        stage("Solicitando aprovação"){
+            steps {
+                script {
+                    slackSend(color: "warning", message: "Para aprovar o deploy clique aqui: ${JOB_URL} - [Janela de 5 min]", channel: "devops-renan")
+                    timeout(time: 5, unit: "MINUTES") {
+                    input(id: "Deploy Decision", message: "Aprovar deploy?", ok: "Deploy")
+                        }
+                    }
+            }
+        }
+
+        stage(deploy){
+            steps {
+                sh 'scp -o StrictHostKeyChecking=no -i /home/vagrant/jenkins target/alura-forum.war vagrant@192.168.50.10:/home/vagrant/alura-forum.war'
+                sh "ssh -o StrictHostKeyChecking=no -i /home/vagrant/jenkins vagrant@192.168.50.10 'sudo mv /home/vagrant/alura-forum.war /var/lib/tomcat8/webapps/alura-forum.war'"
+            }
+
+        }
+    }
+}
