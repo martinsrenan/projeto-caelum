@@ -15,17 +15,17 @@ pipeline {
             }
         }
 
-        stage("Rodar testes unitarios"){
-            steps {
-                sh "mvn clean test"
-            }
-        }
-
         stage("Notificando inicio de deploy"){
             steps {
                 script {
                     slackSend(color: "warning", message: "Iniciando deploy", channel: "devops-renan")
                     }
+            }
+        }
+
+        stage("Rodar testes unitarios"){
+            steps {
+                sh "mvn clean test"
             }
         }
 
@@ -35,20 +35,20 @@ pipeline {
             }
         }
 
-        stage("Notificando finalização de deploy"){
-            steps {
-                script {
-                    slackSend(color: "warning", message: "Deploy finalizado", channel: "devops-renan")
-                    }
-            }
-        }
-
         stage(deploy){
             steps {
                 sh 'scp -o StrictHostKeyChecking=no -i /home/vagrant/jenkins target/alura-forum.war vagrant@192.168.50.10:/home/vagrant/alura-forum.war'
                 sh "ssh -o StrictHostKeyChecking=no -i /home/vagrant/jenkins vagrant@192.168.50.10 'sudo mv /home/vagrant/alura-forum.war /var/lib/tomcat8/webapps/alura-forum.war'"
             }
-
         }
+
+                stage("Notificando finalização de deploy"){
+                    steps {
+                        script {
+                            slackSend(color: "warning", message: "Deploy finalizado", channel: "devops-renan")
+                            }
+                    }
+                }
+
     }
 }
