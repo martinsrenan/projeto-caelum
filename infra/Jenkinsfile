@@ -21,10 +21,10 @@ pipeline {
             }
         }
 
-        stage("Notificando inicio de build no slack"){
+        stage("Notificando inicio de deploy"){
             steps {
                 script {
-                    slackSend(color: "warning", message: "Após testes, build sendo iniciado.", channel: "devops-renan")
+                    slackSend(color: "warning", message: "Iniciando deploy", channel: "devops-renan")
                     }
             }
         }
@@ -35,20 +35,20 @@ pipeline {
             }
         }
 
+        stage("Notificando finalização de deploy"){
+            steps {
+                script {
+                    slackSend(color: "warning", message: "Deploy finalizado", channel: "devops-renan")
+                    }
+            }
+        }
+
         stage(deploy){
             steps {
                 sh 'scp -o StrictHostKeyChecking=no -i /home/vagrant/jenkins target/alura-forum.war vagrant@192.168.50.10:/home/vagrant/alura-forum.war'
                 sh "ssh -o StrictHostKeyChecking=no -i /home/vagrant/jenkins vagrant@192.168.50.10 'sudo mv /home/vagrant/alura-forum.war /var/lib/tomcat8/webapps/alura-forum.war'"
             }
 
-        stage("Notificando deploy "){
-            steps {
-                script {
-                    slackSend(color: "warning", message: "Deploy realizado.", channel: "devops-renan")
-                    }
-                }
-
         }
     }
-}
 }
